@@ -1,0 +1,38 @@
+*&---------------------------------------------------------------------*
+*& Report zsv_po_open_list1
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zsv_po_open_list1.
+DATA : lv_lifnr TYPE ELIFN,
+       lv_bedat TYPE ebdat.
+
+DATA: lo_alv TYPE REF TO cl_salv_table.
+
+SELECT-OPTIONS: s_lifnr FOR lv_lifnr,
+                s_bedat FOR lv_bedat.
+
+START-OF-SELECTION.
+
+SELECT a~ebeln, a~lifnr, a~bedat,
+       b~ebelp, b~matnr, b~menge
+      FROM ekko AS a
+      INNER JOIN ekpo AS b
+      ON b~ebeln = a~ebeln
+        WHERE a~lifnr IN @s_lifnr
+        AND   a~bedat IN @s_bedat
+        INTO TABLE @DATA(lt_po).
+
+  TRY.
+      CALL METHOD cl_salv_table=>factory
+        EXPORTING
+          list_display   = IF_SALV_C_BOOL_SAP=>FALSE
+        IMPORTING
+          r_salv_table   = lo_alv
+        CHANGING
+          t_table        = lt_po.
+
+      lo_alv->display( ).
+
+    CATCH cx_salv_msg.
+  ENDTRY.
