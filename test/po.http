@@ -1,0 +1,39 @@
+### Test file for POService (run with cds watch running on port 4004)
+
+### 1. All purchase orders
+GET http://localhost:4004/odata/v4/po/PurchaseOrders
+
+### 2. Late POs (due date in the past and not fully delivered)
+GET http://localhost:4004/odata/v4/po/PurchaseOrders?$filter=dueDate%20lt%202026-11-03%20and%20deliveredQty%20lt%20orderedQty&$expand=vendor
+
+### 3. Sorted by due date
+GET http://localhost:4004/odata/v4/po/PurchaseOrders?$orderby=dueDate
+
+### 4. With vendor details
+GET http://localhost:4004/odata/v4/po/PurchaseOrders?$expand=vendor
+
+### 5. Create with amount 0 (expect 400)
+POST http://localhost:4004/odata/v4/po/PurchaseOrders
+Content-Type: application/json
+
+{
+  "poNumber": "4500098",
+  "vendor_ID": "V001",
+  "dueDate": "2026-12-15",
+  "orderedQty": 10,
+  "deliveredQty": 0,
+  "amount": 0
+}
+
+### 6. Create a valid PO (expect 201)
+POST http://localhost:4004/odata/v4/po/PurchaseOrders
+Content-Type: application/json
+
+{
+  "poNumber": "4500099",
+  "vendor_ID": "V001",
+  "dueDate": "2026-12-15",
+  "orderedQty": 10,
+  "deliveredQty": 0,
+  "amount": 5000.00
+}
