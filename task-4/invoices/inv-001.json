@@ -1,0 +1,18 @@
+{
+  "invoiceId": "INV-2026-001",
+  "vendorName": "Acme Industrial Parts",
+  "poNumber": "PO-99012",
+  "invoiceDate": "2026-11-05",
+  "currency": "USD",
+  "lineItems": [
+    {
+      "itemCode": "BOLT-M10",
+      "description": "Stainless Steel M10 Bolts",
+      "quantity": 500,
+      "unitPrice": 1.25,
+      "total": 625.00
+    }
+  ],
+  "taxAmount": 50.00,
+  "totalAmount": 675.00
+}

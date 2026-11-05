@@ -1,0 +1,16 @@
+[
+  {
+    "poNumber": "PO-99012",
+    "vendorName": "Acme Industrial Parts",
+    "status": "Approved",
+    "approvedAmount": 675.00,
+    "currency": "USD",
+    "items": [
+      {
+        "itemCode": "BOLT-M10",
+        "approvedQuantity": 500,
+        "unitPrice": 1.25
+      }
+    ]
+  }
+]
