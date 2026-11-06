@@ -1,0 +1,4 @@
+po_number,vendor,status,total_amount,due_date
+PO-99012,Acme Industrial,APPROVED,675.00,2026-10-15
+PO-99013,Global Tech,PENDING,1450.50,2026-11-01
+PO-99014,Logistics Pro,LATE,3200.00,2026-10-20
