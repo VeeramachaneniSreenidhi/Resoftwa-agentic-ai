@@ -1,5 +1,7 @@
 # Day 7: Codex vs Claude Code comparison
 
+Input: Day 6 feature spec (capstone-2/spec.md). Comparison done on Day 7.
+
 Task: implement the four pipeline requirements in capstone-2/spec.md
 (JSON extraction, MCP validation, posting/exceptions, human sign-off).
 
@@ -10,7 +12,7 @@ Task: implement the four pipeline requirements in capstone-2/spec.md
 | Lines added | 777 | 224 |
 | Test cases written | 23 | 10 |
 | Test files with content | 4 | 1 (3 empty) |
-| Tests passing | 11 of 11 (npm test) | 8 of 8 (its own run) |
+| Tests passing | not verified separately | 8 of 8 (its own run) |
 | Source depth (mcp-server / pipeline) | 111 / 134 lines | 12 / 30 lines |
 | Time | not recorded | 8m 8s |
 | Approvals needed | not recorded | ~10 (sandbox failed to start) |
