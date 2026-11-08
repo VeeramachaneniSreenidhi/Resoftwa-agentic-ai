@@ -1,0 +1,278 @@
+diff --git a/src/audit.js b/src/audit.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/src/extract.js b/src/extract.js
+new file mode 100644
+index 0000000..c9bc475
+--- /dev/null
++++ b/src/extract.js
+@@ -0,0 +1,9 @@
++'use strict';
++const fs = require('node:fs/promises');
++const { assertInvoice } = require('./schema');
++const extractionOptions = Object.freeze({ temperature: 0 });
++async function extractInvoice(file, options = extractionOptions) {
++  if (options.temperature !== 0) throw new Error('Extraction requires temperature 0');
++  return assertInvoice(JSON.parse(await fs.readFile(file, 'utf8')));
++}
++module.exports = { extractInvoice, extractionOptions };
+diff --git a/src/index.js b/src/index.js
+new file mode 100644
+index 0000000..cfb9f3c
+--- /dev/null
++++ b/src/index.js
+@@ -0,0 +1,12 @@
++'use strict';
++const fs = require('node:fs/promises');
++const path = require('node:path');
++const { runPipeline } = require('./pipeline');
++async function main() {
++  const root = path.join(__dirname, '..');
++  const purchaseOrders = JSON.parse(await fs.readFile(path.join(root, 'data/po-list.json'), 'utf8'));
++  const result = await runPipeline({ invoiceDir: path.join(root, 'invoices'), purchaseOrders });
++  console.log(JSON.stringify(result, null, 2));
++}
++if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });
++module.exports = { main };
+diff --git a/src/mcp-server.js b/src/mcp-server.js
+new file mode 100644
+index 0000000..7340e0b
+--- /dev/null
++++ b/src/mcp-server.js
+@@ -0,0 +1,12 @@
++'use strict';
++const { validateInvoice } = require('./validate');
++function createMcpServer(purchaseOrders) {
++  return {
++    async callTool({ name, arguments: args }) {
++      if (name !== 'validate_invoice') throw new Error(`Unknown tool: ${name}`);
++      const result = validateInvoice(args.invoice, purchaseOrders);
++      return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result };
++    }
++  };
++}
++module.exports = { createMcpServer };
+diff --git a/src/pipeline.js b/src/pipeline.js
+new file mode 100644
+index 0000000..864335d
+--- /dev/null
++++ b/src/pipeline.js
+@@ -0,0 +1,30 @@
++'use strict';
++const fs = require('node:fs/promises');
++const path = require('node:path');
++const { extractInvoice, extractionOptions } = require('./extract');
++const { createMcpServer } = require('./mcp-server');
++async function runPipeline({ invoiceDir, purchaseOrders = [], mcp = createMcpServer(purchaseOrders), signOff, post = async () => {} }) {
++  const postingSummary = [];
++  const exceptions = [];
++  const files = (await fs.readdir(invoiceDir, { withFileTypes: true })).filter(entry => entry.isFile() && entry.name.endsWith('.json')).map(entry => entry.name).sort();
++  for (const file of files) {
++    try {
++      const invoice = await extractInvoice(path.join(invoiceDir, file), extractionOptions);
++      const response = await mcp.callTool({ name: 'validate_invoice', arguments: { invoice } });
++      const result = response.structuredContent;
++      if (!result || typeof result.valid !== 'boolean' || !Array.isArray(result.reasons) || result.reasons.some(reason => typeof reason !== 'string' || !reason.trim()) || (!result.valid && !result.reasons.length) || (result.valid && result.reasons.length)) throw new Error('Invalid validation tool response');
++      if (!result.valid) { exceptions.push({ file, invoice, reasons: result.reasons }); continue; }
++      postingSummary.push({ file, invoice, status: 'pending' });
++    } catch (error) { exceptions.push({ file, reasons: [error.message] }); }
++  }
++  // Give the reviewer a copy so approval cannot mutate the validated posting records.
++  const approved = postingSummary.length > 0 && typeof signOff === 'function' && await signOff(structuredClone(postingSummary)) === true;
++  if (approved) {
++    for (const record of postingSummary) {
++      await post(structuredClone(record.invoice));
++      record.status = 'posted';
++    }
++  }
++  return { postingSummary, exceptions, approved };
++}
++module.exports = { runPipeline };
+diff --git a/src/schema.js b/src/schema.js
+new file mode 100644
+index 0000000..ea97bf6
+--- /dev/null
++++ b/src/schema.js
+@@ -0,0 +1,32 @@
++'use strict';
++const fields = ['invoiceId', 'vendorName', 'poNumber', 'invoiceDate', 'currency', 'lineItems', 'taxAmount', 'totalAmount'];
++const itemFields = ['itemCode', 'description', 'quantity', 'unitPrice', 'total'];
++function fixed(object, keys, label) {
++  if (!object || typeof object !== 'object' || Array.isArray(object) ||
++      keys.some(key => !Object.hasOwn(object, key)) || Object.keys(object).some(key => !keys.includes(key))) {
++    throw new Error(`${label} must contain exactly: ${keys.join(', ')}`);
++  }
++}
++function amount(value, label) {
++  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error(`${label} must be a nonnegative finite number`);
++}
++function assertInvoice(invoice) {
++  fixed(invoice, fields, 'Invoice');
++  for (const key of fields.slice(0, 5)) {
++    if (typeof invoice[key] !== 'string' || !invoice[key].trim()) throw new Error(`${key} must be a nonempty string`);
++  }
++  if (!/^\d{4}-\d{2}-\d{2}$/.test(invoice.invoiceDate) ||
++      !Number.isFinite(Date.parse(invoice.invoiceDate)) || new Date(invoice.invoiceDate).toISOString().slice(0, 10) !== invoice.invoiceDate) throw new Error('invoiceDate must be a valid YYYY-MM-DD date');
++  if (!/^[A-Z]{3}$/.test(invoice.currency)) throw new Error('currency must be three uppercase letters');
++  if (!Array.isArray(invoice.lineItems) || !invoice.lineItems.length) throw new Error('lineItems must be nonempty');
++  for (const item of invoice.lineItems) {
++    fixed(item, itemFields, 'Line item');
++    for (const key of ['itemCode', 'description']) if (typeof item[key] !== 'string' || !item[key].trim()) throw new Error(`${key} must be a nonempty string`);
++    for (const key of ['quantity', 'unitPrice', 'total']) amount(item[key], key);
++    if (item.quantity === 0) throw new Error('quantity must be positive');
++  }
++  amount(invoice.taxAmount, 'taxAmount');
++  amount(invoice.totalAmount, 'totalAmount');
++  return invoice;
++}
++module.exports = { fields, assertInvoice };
+diff --git a/src/validate.js b/src/validate.js
+new file mode 100644
+index 0000000..fc6a60d
+--- /dev/null
++++ b/src/validate.js
+@@ -0,0 +1,27 @@
++'use strict';
++const { assertInvoice } = require('./schema');
++const equalMoney = (a, b) => Math.abs(a - b) < 0.005;
++function validateInvoice(invoice, purchaseOrders) {
++  try { assertInvoice(invoice); } catch (error) { return { valid: false, reasons: [error.message] }; }
++  const reasons = [];
++  const po = purchaseOrders.find(entry => entry.poNumber === invoice.poNumber);
++  if (!po) return { valid: false, reasons: [`Unknown PO: ${invoice.poNumber}`] };
++  if (po.status !== 'Approved') reasons.push('PO is not Approved');
++  if (po.vendorName !== invoice.vendorName) reasons.push('Vendor does not match PO');
++  if (po.currency !== invoice.currency) reasons.push('Currency does not match PO');
++  if (invoice.totalAmount > po.approvedAmount) reasons.push('Invoice exceeds approved PO amount');
++  const quantities = new Map();
++  for (const item of invoice.lineItems) {
++    const approved = po.items.find(entry => entry.itemCode === item.itemCode);
++    quantities.set(item.itemCode, (quantities.get(item.itemCode) || 0) + item.quantity);
++    if (!approved) reasons.push(`Unknown PO item: ${item.itemCode}`);
++    else {
++      if (quantities.get(item.itemCode) > approved.approvedQuantity) reasons.push(`Quantity exceeds PO for ${item.itemCode}`);
++      if (!equalMoney(item.unitPrice, approved.unitPrice)) reasons.push(`Unit price does not match PO for ${item.itemCode}`);
++    }
++    if (!equalMoney(item.total, item.quantity * item.unitPrice)) reasons.push(`Line total is incorrect for ${item.itemCode}`);
++  }
++  if (!equalMoney(invoice.totalAmount, invoice.taxAmount + invoice.lineItems.reduce((sum, item) => sum + item.total, 0))) reasons.push('Invoice total does not match line totals plus tax');
++  return { valid: reasons.length === 0, reasons };
++}
++module.exports = { validateInvoice };
+diff --git a/test/mcp.test.js b/test/mcp.test.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test/pipeline.test.js b/test/pipeline.test.js
+new file mode 100644
+index 0000000..887d21c
+--- /dev/null
++++ b/test/pipeline.test.js
+@@ -0,0 +1,102 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs/promises');
++const os = require('node:os');
++const path = require('node:path');
++const { runPipeline } = require('../src/pipeline');
++const { extractInvoice } = require('../src/extract');
++const { assertInvoice } = require('../src/schema');
++const { validateInvoice } = require('../src/validate');
++const { createMcpServer } = require('../src/mcp-server');
++const invoice = { invoiceId: 'INV-1', vendorName: 'Vendor', poNumber: 'PO-1', invoiceDate: '2026-11-05', currency: 'USD', lineItems: [{ itemCode: 'A', description: 'Part', quantity: 2, unitPrice: 10, total: 20 }], taxAmount: 2, totalAmount: 22 };
++const po = { poNumber: 'PO-1', vendorName: 'Vendor', status: 'Approved', approvedAmount: 22, currency: 'USD', items: [{ itemCode: 'A', approvedQuantity: 2, unitPrice: 10 }] };
++async function directory(t, entries = { 'invoice.json': invoice }) {
++  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'capstone-test-'));
++  t.after(() => fs.rm(dir, { recursive: true, force: true }));
++  for (const [file, data] of Object.entries(entries)) await fs.writeFile(path.join(dir, file), typeof data === 'string' ? data : JSON.stringify(data));
++  return dir;
++}
++test('requirement 1: read vendor JSON deterministically with fixed fields and temperature 0', async t => {
++  const dir = await directory(t);
++  assert.deepEqual(await extractInvoice(path.join(dir, 'invoice.json')), invoice);
++  await assert.rejects(extractInvoice(path.join(dir, 'invoice.json'), { temperature: 1 }), /temperature 0/);
++  for (const key of Object.keys(invoice)) {
++    const copy = structuredClone(invoice); delete copy[key];
++    assert.throws(() => assertInvoice(copy), /exactly/);
++  }
++  assert.throws(() => assertInvoice({ ...invoice, extra: true }), /exactly/);
++  for (const value of [null, [], { ...invoice, invoiceDate: '2026-02-30' }, { ...invoice, currency: 'usd' }, { ...invoice, lineItems: [] }, { ...invoice, totalAmount: -1 }, { ...invoice, taxAmount: NaN }, { ...invoice, vendorName: '' }]) assert.throws(() => assertInvoice(value));
++  for (const change of [{ quantity: 0 }, { unitPrice: '10' }, { total: Infinity }, { itemCode: '' }, { extra: true }]) {
++    assert.throws(() => assertInvoice({ ...invoice, lineItems: [{ ...invoice.lineItems[0], ...change }] }));
++  }
++});
++test('requirement 2: custom MCP validation accepts clean invoices and rejects unknown tools', async () => {
++  const mcp = createMcpServer([po]);
++  const result = await mcp.callTool({ name: 'validate_invoice', arguments: { invoice } });
++  assert.deepEqual(result.structuredContent, { valid: true, reasons: [] });
++  assert.deepEqual(JSON.parse(result.content[0].text), result.structuredContent);
++  await assert.rejects(mcp.callTool({ name: 'unknown', arguments: {} }), /Unknown tool/);
++});
++test('requirement 2: every PO rule and arithmetic anomaly has a clear reason', () => {
++  const cases = [
++    [{ ...invoice, poNumber: 'missing' }, [po], /Unknown PO/],
++    [invoice, [{ ...po, status: 'Rejected' }], /not Approved/],
++    [{ ...invoice, vendorName: 'Other' }, [po], /Vendor/],
++    [{ ...invoice, currency: 'EUR' }, [po], /Currency/],
++    [{ ...invoice, totalAmount: 23 }, [po], /exceeds approved/],
++    [{ ...invoice, lineItems: [{ ...invoice.lineItems[0], itemCode: 'B' }] }, [po], /Unknown PO item/],
++    [{ ...invoice, lineItems: [{ ...invoice.lineItems[0], quantity: 3 }] }, [po], /Quantity/],
++    [{ ...invoice, lineItems: [{ ...invoice.lineItems[0], unitPrice: 11 }] }, [po], /Unit price/],
++    [{ ...invoice, lineItems: [{ ...invoice.lineItems[0], total: 19 }] }, [po], /Line total/],
++    [{ ...invoice, taxAmount: 1 }, [po], /plus tax/],
++    [{ ...invoice, lineItems: [invoice.lineItems[0], invoice.lineItems[0]] }, [po], /Quantity/],
++    [{}, [po], /exactly/]
++  ];
++  for (const [input, orders, reason] of cases) {
++    const result = validateInvoice(input, orders);
++    assert.equal(result.valid, false); assert.match(result.reasons.join('; '), reason);
++  }
++});
++test('requirement 3: route clean records and anomalies separately, continue after malformed JSON, ignore non-JSON files', async t => {
++  const dir = await directory(t, { 'a.json': '{', 'b.json': { ...invoice, poNumber: 'unknown' }, 'c.json': invoice, 'ignored.txt': '{}' });
++  const result = await runPipeline({ invoiceDir: dir, purchaseOrders: [po] });
++  assert.equal(result.postingSummary.length, 1);
++  assert.equal(result.postingSummary[0].invoice.invoiceId, 'INV-1');
++  assert.equal(result.exceptions.length, 2);
++  assert.ok(result.exceptions.every(entry => entry.reasons.length));
++  assert.match(result.exceptions[1].reasons[0], /Unknown PO/);
++});
++test('requirements 2 and 3: pipeline invokes custom MCP tool and fails closed on tool errors or malformed responses', async t => {
++  const dir = await directory(t);
++  for (const mcp of [
++    { async callTool(request) { assert.equal(request.name, 'validate_invoice'); assert.deepEqual(request.arguments.invoice, invoice); throw new Error('Tool unavailable'); } },
++    { async callTool() { return { structuredContent: { valid: true, reasons: ['conflict'] } }; } },
++    { async callTool() { return {}; } }
++  ]) {
++    const result = await runPipeline({ invoiceDir: dir, mcp, signOff: () => true, post: () => assert.fail('must not post') });
++    assert.equal(result.postingSummary.length, 0); assert.equal(result.exceptions.length, 1);
++  }
++});
++test('requirement 4: absent, denied, or truthy nonboolean sign-off never posts', async t => {
++  const dir = await directory(t);
++  for (const signOff of [undefined, () => false, () => 'yes', () => 1, async () => undefined]) {
++    const result = await runPipeline({ invoiceDir: dir, purchaseOrders: [po], signOff, post: () => assert.fail('must not post') });
++    assert.equal(result.approved, false); assert.equal(result.postingSummary[0].status, 'pending');
++  }
++});
++test('requirement 4: explicit async human approval precedes posting, exceptions never post, review cannot mutate validated data', async t => {
++  const dir = await directory(t, { 'clean.json': invoice, 'bad.json': { ...invoice, vendorName: 'Other' } });
++  const events = [];
++  const result = await runPipeline({ invoiceDir: dir, purchaseOrders: [po],
++    async signOff(records) { events.push('review'); assert.equal(records.length, 1); records[0].invoice.totalAmount = 0; return true; },
++    async post(record) { events.push('post'); assert.equal(record.totalAmount, 22); }
++  });
++  assert.deepEqual(events, ['review', 'post']); assert.equal(result.approved, true);
++  assert.equal(result.postingSummary[0].status, 'posted'); assert.equal(result.exceptions.length, 1);
++});
++test('requirement 4: reviewer failure prevents posting and posting errors propagate', async t => {
++  const dir = await directory(t);
++  await assert.rejects(runPipeline({ invoiceDir: dir, purchaseOrders: [po], signOff() { throw new Error('Review failed'); }, post: () => assert.fail() }), /Review failed/);
++  await assert.rejects(runPipeline({ invoiceDir: dir, purchaseOrders: [po], signOff: () => true, post() { throw new Error('Posting failed'); } }), /Posting failed/);
++});
+diff --git a/test/schema.test.js b/test/schema.test.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test/validate.test.js b/test/validate.test.js
+new file mode 100644
+index 0000000..e69de29
