@@ -1,0 +1,5 @@
+po_number,vendor,po_amount,currency,status
+PO-4501,Sharma Steels,450000,INR,open
+PO-4502,Vizag Paints,120000,INR,open
+PO-4503,Guntur Cables,980000,INR,open
+PO-4505,Guntur Cables,100000,INR,closed

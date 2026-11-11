@@ -1,0 +1,14 @@
+[
+  {
+    "requisition_id": "PR4",
+    "reason": "New supplier",
+    "status": "awaiting manager",
+    "routed_at": "2026-11-11T10:22:12"
+  },
+  {
+    "requisition_id": "PR5",
+    "reason": "Amount above Rs 25 lakh threshold",
+    "status": "awaiting manager",
+    "routed_at": "2026-11-11T10:22:12"
+  }
+]

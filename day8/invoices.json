@@ -1,0 +1,7 @@
+[
+ {"invoice_no":"INV-1001","vendor":"Sharma Steels","po_number":"PO-4501","invoice_date":"2026-11-02","net_amount":450000,"tax_amount":81000,"total_amount":531000},
+ {"invoice_no":"INV-1002","vendor":"Vizag Paints","po_number":"PO-4502","invoice_date":"2026-11-03","net_amount":120000,"tax_amount":21600,"total_amount":141600},
+ {"invoice_no":"INV-1003","vendor":"Guntur Cables","po_number":"PO-4503","invoice_date":"2026-11-04","net_amount":985000,"tax_amount":177300,"total_amount":1162300},
+ {"invoice_no":"INV-1004","vendor":"New Vendor Co","po_number":"PO-4599","invoice_date":"2026-11-05","net_amount":60000,"tax_amount":10800,"total_amount":70800},
+ {"invoice_no":"INV-1005","vendor":"Sharma Steels","po_number":"PO-4501","invoice_date":"2026-11-06","net_amount":3200000,"tax_amount":576000,"total_amount":3776000}
+]
