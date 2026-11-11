@@ -1,0 +1,21 @@
+test_audit_log_has_5_entries_all_not_posted (inv_test.AuditLogTests.test_audit_log_has_5_entries_all_not_posted) ... ok
+test_inv_1001_clean (inv_test.InvoiceOutcomeTests.test_inv_1001_clean) ... ok
+test_inv_1002_clean (inv_test.InvoiceOutcomeTests.test_inv_1002_clean) ... ok
+test_inv_1003_clean_within_tolerance (inv_test.InvoiceOutcomeTests.test_inv_1003_clean_within_tolerance) ... ok
+test_inv_1004_exception_po_not_found (inv_test.InvoiceOutcomeTests.test_inv_1004_exception_po_not_found) ... ok
+test_inv_1005_exception_exceeds_po (inv_test.InvoiceOutcomeTests.test_inv_1005_exception_exceeds_po) ... ok
+test_closed_po_is_exception (inv_test.RuleTests.test_closed_po_is_exception) ... ok
+test_duplicate_invoice_number_is_exception (inv_test.RuleTests.test_duplicate_invoice_number_is_exception) ... ok
+test_missing_field_is_exception (inv_test.RuleTests.test_missing_field_is_exception) ... ok
+test_missing_po_master_fails_safe (inv_test.RuleTests.test_missing_po_master_fails_safe) ... ok
+test_non_numeric_amount_is_exception (inv_test.RuleTests.test_non_numeric_amount_is_exception) ... ok
+test_total_mismatch_is_exception (inv_test.RuleTests.test_total_mismatch_is_exception) ... ok
+test_net_at_limit_is_clean (inv_test.ToleranceTests.test_net_at_limit_is_clean) ... ok
+test_net_one_rupee_over_limit_is_exception (inv_test.ToleranceTests.test_net_one_rupee_over_limit_is_exception) ... ok
+test_vendor_case_and_spaces_ignored (inv_test.VendorTests.test_vendor_case_and_spaces_ignored) ... ok
+test_vendor_mismatch_is_exception (inv_test.VendorTests.test_vendor_mismatch_is_exception) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.005s
+
+OK

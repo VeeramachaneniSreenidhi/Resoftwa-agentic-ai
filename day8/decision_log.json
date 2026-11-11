@@ -1,0 +1,52 @@
+[
+  {
+    "timestamp": "2026-11-11T10:22:12",
+    "requisition_id": "PR1",
+    "supplier": "Sharma Steels",
+    "amount": 450000,
+    "supplier_status": "good",
+    "rule_triggered": "Rule 3",
+    "decision": "PO created",
+    "reason": "Good supplier, within Rs 25 lakh limit"
+  },
+  {
+    "timestamp": "2026-11-11T10:22:12",
+    "requisition_id": "PR2",
+    "supplier": "Vizag Paints",
+    "amount": 120000,
+    "supplier_status": "good",
+    "rule_triggered": "Rule 3",
+    "decision": "PO created",
+    "reason": "Good supplier, within Rs 25 lakh limit"
+  },
+  {
+    "timestamp": "2026-11-11T10:22:12",
+    "requisition_id": "PR3",
+    "supplier": "Guntur Cables",
+    "amount": 980000,
+    "supplier_status": "good",
+    "rule_triggered": "Rule 3",
+    "decision": "PO created",
+    "reason": "Good supplier, within Rs 25 lakh limit"
+  },
+  {
+    "timestamp": "2026-11-11T10:22:12",
+    "requisition_id": "PR4",
+    "supplier": "New Vendor Co",
+    "amount": 60000,
+    "supplier_status": "new",
+    "rule_triggered": "Rule 1",
+    "decision": "Sent to manager",
+    "reason": "New supplier"
+  },
+  {
+    "timestamp": "2026-11-11T10:22:12",
+    "requisition_id": "PR5",
+    "supplier": "Sharma Steels",
+    "amount": 3200000,
+    "supplier_status": "good",
+    "rule_triggered": "Rule 2",
+    "decision": "Sent to manager",
+    "reason": "Amount above Rs 25 lakh threshold"
+  }
+]

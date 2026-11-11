@@ -1,0 +1,66 @@
+[
+  {
+    "timestamp": "2026-11-11T10:49:52+00:00",
+    "invoice_no": "INV-1001",
+    "vendor": "Sharma Steels",
+    "po_number": "PO-4501",
+    "total_amount": 531000,
+    "status": "clean",
+    "reasons": [],
+    "validated_via": "MCP tool (inv_mcp_server.py)",
+    "next_step": "Ready for human AP approval; NOT posted",
+    "posted": false
+  },
+  {
+    "timestamp": "2026-11-11T10:49:52+00:00",
+    "invoice_no": "INV-1002",
+    "vendor": "Vizag Paints",
+    "po_number": "PO-4502",
+    "total_amount": 141600,
+    "status": "clean",
+    "reasons": [],
+    "validated_via": "MCP tool (inv_mcp_server.py)",
+    "next_step": "Ready for human AP approval; NOT posted",
+    "posted": false
+  },
+  {
+    "timestamp": "2026-11-11T10:49:52+00:00",
+    "invoice_no": "INV-1003",
+    "vendor": "Guntur Cables",
+    "po_number": "PO-4503",
+    "total_amount": 1162300,
+    "status": "clean",
+    "reasons": [],
+    "validated_via": "MCP tool (inv_mcp_server.py)",
+    "next_step": "Ready for human AP approval; NOT posted",
+    "posted": false
+  },
+  {
+    "timestamp": "2026-11-11T10:49:52+00:00",
+    "invoice_no": "INV-1004",
+    "vendor": "New Vendor Co",
+    "po_number": "PO-4599",
+    "total_amount": 70800,
+    "status": "exception",
+    "reasons": [
+      "PO not found: PO-4599"
+    ],
+    "validated_via": "MCP tool (inv_mcp_server.py)",
+    "next_step": "Hold; resolve exception: Confirm the PO number with the requester; get a valid PO or reject the invoice; NOT posted",
+    "posted": false
+  },
+  {
+    "timestamp": "2026-11-11T10:49:52+00:00",
+    "invoice_no": "INV-1005",
+    "vendor": "Sharma Steels",
+    "po_number": "PO-4501",
+    "total_amount": 3776000,
+    "status": "exception",
+    "reasons": [
+      "Net amount 3,200,000 exceeds PO amount 450,000 by 611.1% (tolerance 2%)"
+    ],
+    "validated_via": "MCP tool (inv_mcp_server.py)",
+    "next_step": "Hold; resolve exception: Do not pay the excess; ask vendor for a credit note or requester for a PO amendment; NOT posted",
+    "posted": false
+  }
+]
