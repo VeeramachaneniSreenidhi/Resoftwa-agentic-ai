@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.1, pytest-9.2.0, pluggy-1.7.0 -- /home/user/.asdf-inst/installs/python/3.13.1/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/user/projects/project2
+collecting ... collected 10 items
+
+day9/tests/test_attacks.py::test_attack_1_prompt_injection PASSED        [ 10%]
+day9/tests/test_attacks.py::test_attack_2_po_discrepancy PASSED          [ 20%]
+day9/tests/test_attacks.py::test_attack_3_missing_po PASSED              [ 30%]
+day9/tests/test_attacks.py::test_attack_4_duplicate_invoice PASSED       [ 40%]
+day9/tests/test_attacks.py::test_attack_5_extreme_amount PASSED          [ 50%]
+day9/tests/test_attacks.py::test_attack_6_invalid_due_date PASSED        [ 60%]
+day9/tests/test_attacks.py::test_attack_7_invalid_gstin PASSED           [ 70%]
+day9/tests/test_attacks.py::test_attack_8_vendor_mismatch PASSED         [ 80%]
+day9/tests/test_attacks.py::test_attack_9_empty_file PASSED              [ 90%]
+day9/tests/test_attacks.py::test_attack_10_line_item_sum_mismatch PASSED [100%]
+
+============================== 10 passed in 0.02s ==============================
