@@ -1,0 +1,5 @@
+[
+  {"po_number": "4500012", "vendor_name": "Sharma Steels", "due_date": "2026-10-10", "delivered_qty": 60, "total_qty": 100},
+  {"po_number": "4500013", "vendor_name": "Vizag Paints", "due_date": "2026-10-20", "delivered_qty": 100, "total_qty": 100},
+  {"po_number": "4500014", "vendor_name": "Guntur Cables", "due_date": "2026-10-05", "delivered_qty": 0, "total_qty": 50}
+]
