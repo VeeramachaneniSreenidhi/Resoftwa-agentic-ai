@@ -1,0 +1,7 @@
+Feedback for each answer:
+1. Agentic AI can use a feedback loop to observe tool results and adjust its next action.
+2. Correct, Adding example to each shot can make it better to understand.
+3. I think Chain of Thought is not the same as ReAct or tool verification.
+4. Correct.
+5. Mentioning that separating instructions from data alone is not sufficient; tool permissions, input validation and human approval for sensitive actions are also important.
+6. Correct.
